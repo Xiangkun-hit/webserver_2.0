@@ -55,9 +55,25 @@ private:
     FILE *m_fp;             //打开log的文件指针
     char* m_buf;            //日志缓冲区
     block_queue<std::string>* m_log_queue;   //阻塞队列（异步日志核心）
-    locker m_mutex;         //
-    bool m_is_async;        //是否同步标志位
+    locker m_mutex;         //互斥锁（线程安全）
+    bool m_is_async;        //是否异步标志位
+
+public:
+    int m_close_log;       //关闭日志
 };
 
+// 宏定义：外部调用写日志,主要用于不同类型的日志输出
+#define LOG_DEBUG(format, ...) if(0 == m_close_log){\
+    Log::get_instance()->write_log(0, format, ##__VA_ARGS__);\
+    Log::get_instance()->flush();}
+#define LOG_INFO(format, ...) if(0 == m_close_log){\
+    Log::get_instance()->write_log(1, format, ##__VA_ARGS__);\
+    Log::get_instance()->flush();}
+#define LOG_WARN(format, ...) if(0 == m_close_log){\
+    Log::get_instance()->write_log(2, format, ##__VA_ARGS__);\
+    Log::get_instance()->flush();}
+#define LOG_ERROR(format, ...) if(0 == m_close_log){\
+    Log::get_instance()->write_log(3, format, ##__VA_ARGS__);\
+    Log::get_instance()->flush();}
 
 #endif
