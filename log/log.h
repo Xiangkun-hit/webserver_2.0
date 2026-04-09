@@ -43,6 +43,7 @@ private:
             fputs(single_log.c_str(), m_fp);
             m_mutex.unlock();
         }
+        return nullptr;
     }
 
 private:
@@ -63,16 +64,16 @@ public:
 };
 
 // 宏定义：外部调用写日志,主要用于不同类型的日志输出
-#define LOG_DEBUG(format, ...) if(0 == m_close_log){\
+#define LOG_DEBUG(format, ...) if(0 == Log::get_instance()->m_close_log){\
     Log::get_instance()->write_log(0, format, ##__VA_ARGS__);\
     Log::get_instance()->flush();}
-#define LOG_INFO(format, ...) if(0 == m_close_log){\
+#define LOG_INFO(format, ...) if(0 == Log::get_instance()->m_close_log){\
     Log::get_instance()->write_log(1, format, ##__VA_ARGS__);\
     Log::get_instance()->flush();}
-#define LOG_WARN(format, ...) if(0 == m_close_log){\
+#define LOG_WARN(format, ...) if(0 == Log::get_instance()->m_close_log){\
     Log::get_instance()->write_log(2, format, ##__VA_ARGS__);\
     Log::get_instance()->flush();}
-#define LOG_ERROR(format, ...) if(0 == m_close_log){\
+#define LOG_ERROR(format, ...) if(0 == Log::get_instance()->m_close_log){\
     Log::get_instance()->write_log(3, format, ##__VA_ARGS__);\
     Log::get_instance()->flush();}
 
