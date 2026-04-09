@@ -17,8 +17,8 @@
 #include <string.h>
 #include <iostream>
 #include <string>
-#include <../lock/lock.h>
-#include <../log/log.h>
+#include "../lock/lock.h"
+#include "../log/log.h"
 
 class connection_pool{
 public:
@@ -65,10 +65,12 @@ public:
 };
 
 // RAII机制：自动获取/释放连接
+// 将数据库连接的获取与释放通过RAII机制封装，避免手动释放。
 class connectionRAII{
 
 public:
-    connectionRAII(MYSQL** con, connection_pool* connPool);
+    //双指针对MYSQL *SQL修改
+    connectionRAII(MYSQL** SQL, connection_pool* connPool);
     ~connectionRAII();
 
 private:
