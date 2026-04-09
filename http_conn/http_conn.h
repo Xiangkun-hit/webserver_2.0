@@ -76,7 +76,7 @@ public:
 
 public:
     //初始化套接字地址，函数内部会调用私有方法init
-    void init(int sockfd, const sockaddr_in &addr);
+    void init(int sockfd, const sockaddr_in &addr, char*, int, int, std::string user, std::string passwd, std::string sqlname);
 
     // 关闭http连接
     void clost_conn(bool real_close = true);
@@ -160,7 +160,7 @@ private:
     char m_write_buf[WRITE_BUFFER_SIZE];    //存储发出的响应报文数据
     int m_write_idx;                // 写缓冲区待发送的字节数
 
-    CHECK_STATE m_chek_state;           // 主状态机当前所处状态
+    CHECK_STATE m_check_state;           // 主状态机当前所处状态
     METHOD m_method;                    // 请求方法
 
     //以下为解析请求报文中对应的6个变量--存储读取文件的名称
@@ -180,6 +180,7 @@ private:
     char* m_string;                     // 存储请求头数据
     int bytes_to_send;                  // 剩余发送字节数
     int bytes_have_send;                // 已发送字节数
+    char* doc_root;
     int improv;
     int timer_flag;
 
