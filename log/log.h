@@ -20,6 +20,7 @@ public:
     // 异步日志线程函数：从阻塞队列取日志，写入文件
     static void* flush_log_thread(void* args){
         Log::get_instance()->async_write_log();
+        return nullptr;
     }
 
     // 初始化日志：路径、文件名、缓冲区大小、最大行数、队列大小

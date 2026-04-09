@@ -44,19 +44,19 @@ bool Log::init(const char* file_name, int close_log, int log_buf_size, int split
 
     // 解析文件名,从后往前找到第一个/的位置
     const char* p = strrchr(file_name, '/');
-    char log_full_name[256]= {0};
+    char log_full_name[512]= {0};
 
     //相当于自定义日志名
     //若输入的文件名没有/，则直接将时间+文件名作为日志名
     if(p == NULL){
-        snprintf(log_full_name, 255, "%d_%02d_%02d_%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
+        snprintf(log_full_name, 511, "%d_%02d_%02d_%s", my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
     }else{
         //将/的位置向后移动一个位置，然后复制到logname中
         //p - file_name + 1是文件所在路径文件夹的长度
         //dirname相当于./
         strcpy(log_name, p + 1);
         strncpy(dir_name, file_name, p - file_name + 1);
-        snprintf(log_full_name, 255, "%s%d_%02d_%02d_%s", dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, log_name);
+        snprintf(log_full_name, 511, "%s%d_%02d_%02d_%s", dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, log_name);
     }
 
     // 打开日志文件
@@ -101,7 +101,7 @@ void Log::write_log(int level, const char* format, ...){
 
     // 按天/按行数分割日志
     if(m_today != my_tm.tm_mday || m_count % m_split_lines == 0){
-        char new_log[256] = {0};
+        char new_log[512] = {0};
         fflush(m_fp);
         fclose(m_fp);
         char tail[16] = {0};
@@ -113,7 +113,7 @@ void Log::write_log(int level, const char* format, ...){
         if(m_today != my_tm.tm_mday){
             // 拼接新文件名：目录 + 日期后缀 + 基础日志名
             // 例：./log/2025_05_26_server.log
-            snprintf(new_log, 255, "%s%s%s", dir_name, tail, log_name);
+            snprintf(new_log, 511, "%s%s%s", dir_name, tail, log_name);
             m_today = my_tm.tm_mday;
             m_count = 0;
         }
@@ -122,7 +122,7 @@ void Log::write_log(int level, const char* format, ...){
             //超过了最大行，在之前的日志名基础上加后缀, m_count/m_split_lines
             // 拼接文件名：目录 + 日期 + 日志名.序号
             // 例：./log/2025_05_26_server.log.1  .2  .3
-            snprintf(new_log, 255, "%s%s%s.%lld", dir_name, tail, log_name, m_count / m_split_lines);
+            snprintf(new_log, 511, "%s%s%s.%lld", dir_name, tail, log_name, m_count / m_split_lines);
         }
         m_fp = fopen(new_log, "a");
     }
