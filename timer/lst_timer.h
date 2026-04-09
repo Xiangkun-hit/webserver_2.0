@@ -77,14 +77,41 @@ private:
     util_timer* tail;   // 链表尾
 };
 
+// 定时器回调函数：超时关闭客户端连接
 void cb_func(client_data* user_data);
 
+class Utils{
+public:
+    Utils();
+    ~Utils();
 
+    // 初始化时间槽
+    void init(int timeslot);
 
+    // 设置文件描述符非阻塞
+    int setnonblocking(int fd);
 
+    // 向epoll添加文件描述符
+    void addfd(int epollfd, int fd, bool one_shot, int TRIGMode);
 
+    // 信号处理函数
+    static void sig_handler(int sig);
 
+    //设置信号函数
+    void addsig(int sig, void(handler)(int), bool restart = true);
 
+    // 定时处理任务（触发tick）
+    // 定时处理任务，重新定时以不断触发SIGALRM信号
+    void timer_handler();
 
+    // 发送错误信息并关闭连接
+    void show_error(int connfd, const char* info);
+
+public:
+    static int* u_pipefd;           // 管道fd：信号传递
+    sort_timer_lst m_timer_list;    // 定时器链表
+    static int u_epollfd;           // epoll文件描述符
+    int m_TIMESLOT;                 // 定时时间槽
+};
 
 #endif
