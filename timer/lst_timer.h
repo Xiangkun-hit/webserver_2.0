@@ -82,8 +82,8 @@ void cb_func(client_data* user_data);
 
 class Utils{
 public:
-    Utils();
-    ~Utils();
+    Utils(){}
+    ~Utils(){}
 
     // 初始化时间槽
     void init(int timeslot);
