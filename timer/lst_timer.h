@@ -42,7 +42,7 @@ public:
     util_timer() : prev(nullptr), next(nullptr){}
 public:
     time_t expire;           // 超时时间（时间戳）
-    void* cb_func(client_data*);      // 超时回调函数（关闭连接）
+    void (*cb_func)(client_data*);      // 超时回调函数（关闭连接）
     client_data* user_data;             // 指向客户端数据
 
     util_timer* prev;                   // 前驱节点

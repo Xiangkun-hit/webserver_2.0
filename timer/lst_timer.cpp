@@ -222,7 +222,7 @@ void Utils::sig_handler(int sig){
 
 // 自定义信号函数：创建sigaction结构体变量，设置信号函数
 // 信号处理函数中仅仅通过管道发送信号值，不处理信号对应的逻辑，缩短异步执行时间，减少对主程序的影响。
-void Utils::addsig(int sig, void(handler)(int), bool restart = true){
+void Utils::addsig(int sig, void(handler)(int), bool restart){
     //创建sigaction结构体变量
     struct sigaction sa;
     memset(&sa, '\0', sizeof(sa));
