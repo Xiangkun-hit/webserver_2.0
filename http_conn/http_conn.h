@@ -181,9 +181,11 @@ private:
     int bytes_to_send;                  // 剩余发送字节数
     int bytes_have_send;                // 已发送字节数
     char* doc_root;
+    
+public:
     int improv;
     int timer_flag;
-
+private:
     std::map<std::string, std::string> m_users;
     int m_TRIGMode;
     int m_close_log;

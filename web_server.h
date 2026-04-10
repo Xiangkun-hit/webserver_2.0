@@ -47,6 +47,10 @@ public:
     // 事件循环
     void event_loop();
 
+    //定时器
+    void timer(int connfd, struct sockaddr_in client_address);
+    void adjust_timer(util_timer *timer);
+    void deal_timer(util_timer *timer, int sockfd);
 
 
     // 处理新客户端连接
@@ -76,7 +80,7 @@ public:
 
     // 触发模式
     int m_TRIGMode;         // 整体模式
-    int m_LISTNETrigmode;   // 监听模式
+    int m_LISTENTrigmode;   // 监听模式
     int m_CONNTrigmode;     // 连接模式
 
     // 数据库相关
@@ -102,7 +106,7 @@ public:
     // 定时器相关
     sort_timer_lst m_timer_lst;
     client_data* users_timer;
-    
+
     Utils utils;
 };
 
