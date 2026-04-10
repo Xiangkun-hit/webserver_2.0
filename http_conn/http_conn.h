@@ -134,7 +134,7 @@ private:
 
     // ---------------------------------------------------
     // 这组函数被process_write调用以填充http响应
-    // 根据响应报文格式，生成对应8个部分，以下函数均由do_request调用
+    // 根据响应报文格式，生成对应8个部分，以下函数均由process_write调用
     void unmap();
     bool add_response(const char* format, ...);
     bool add_content(const char* content);

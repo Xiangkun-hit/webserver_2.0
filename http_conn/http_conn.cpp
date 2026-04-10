@@ -255,6 +255,7 @@ HTTP_CODE http_conn::process_read(){
 }      
 
 // 填充http响应,向m_write_buf写入响应报文数据
+// 根据do_request的返回状态，服务器子线程调用process_write向m_write_buf中写入响应报文。
 bool http_conn::process_write(HTTP_CODE ret){
     
 }     
@@ -563,31 +564,68 @@ LINE_STATUS http_conn::parse_line(){
 
 // ---------------------------------------------------
 // 这组函数被process_write调用以填充http响应
-// 根据响应报文格式，生成对应8个部分，以下函数均由do_request调用
+// 根据响应报文格式，生成对应8个部分，以下函数均由process_write调用
+// 取消内存映射
 void http_conn::unmap(){
-
+    if(m_file_address){
+        munmap(m_file_address, m_file_stat.st_size);
+        m_file_address = 0;
+    }
 }
+// add_response函数更新m_write_idx指针和缓冲区m_write_buf中的内容
+// 往写缓冲区拼接响应内容（可变参数）
 bool http_conn::add_response(const char* format, ...){
+    if(m_write_idx >= WRITE_BUFFER_SIZE){   //如果写入内容超出m_write_buf大小则报错
+        return false;
+    }
+    va_list arg_list;                   //定义可变参数列表
+    va_start(arg_list, format);         //将变量arg_list初始化为传入参数
 
+    //将数据format从可变参数列表写入缓冲区，返回写入数据的长度
+    int len = vsnprintf(m_write_buf + m_write_idx, WRITE_BUFFER_SIZE - 1 - m_write_idx, format, arg_list);
+
+    //如果写入的数据长度超过缓冲区剩余空间，则报错
+    if(len >= (WRITE_BUFFER_SIZE - 1 - m_write_idx)){
+        va_end(arg_list);
+        return false;
+    }
+
+    m_write_idx += len;     //更新m_write_idx位置
+    va_end(arg_list);       //清空可变参列表
+    return true;
 }
+
+// 以下涉及的函数，均是内部调用add_response函数更新m_write_idx指针和缓冲区m_write_buf中的内容。
+// 添加文本content
 bool http_conn::add_content(const char* content){
-
+    return add_response("%s", content);
 }
+
+//添加状态行
 bool http_conn::add_status_line(int status, const char* title){
-
+    return add_response("%s %d %s\r\n","HTTP/1.1",status,title);
 }
+
+//添加消息报头，具体的添加文本长度(content_length)、连接状态(linger)和空行(blank_line)
 bool http_conn::add_headers(int content_length){
-
+    return add_content_length(content_length) && add_linger() && add_blank_line();
 }
+
+//添加文本类型，这里是html
 bool http_conn::add_content_type(){
-
+    return add_response("Content-Type:%s\r\n", "text/html");
 }
+
 bool http_conn::add_content_length(int content_length){
-
+    return add_response("Content-Type:%s\r\n", content_length);
 }
+
+//添加连接状态，通知浏览器端是保持连接还是关闭
 bool http_conn::add_linger(){
-
+    return add_response("Connection:%s\r\n", (m_linger==true)? "keep-alive" : "close");
 }
-bool http_conn::add_blank_line(){
 
+//添加空行
+bool http_conn::add_blank_line(){
+    return add_response("%s", "\r\n");
 }
