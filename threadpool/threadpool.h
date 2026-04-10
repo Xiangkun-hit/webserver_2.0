@@ -154,7 +154,7 @@ void* threadpool<T>::worker(void* arg){
 // 主要实现，工作线程从请求队列中取出某个任务进行处理，注意线程同步。
 template<typename T>
 void threadpool<T>::run(){
-/*
+
 
     // 循环运行，直到m_stop为true
     while(!m_stop){
@@ -198,7 +198,7 @@ void threadpool<T>::run(){
             request->process();
         }
     }
-*/
+
 }
 
     
