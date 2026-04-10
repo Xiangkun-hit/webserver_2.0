@@ -55,7 +55,7 @@ void WebServer::sql_pool(){
     m_connPool->init("localhost", m_user, m_passWord, m_databaseName, 3306, m_sql_num, m_close_log);
 
     //初始化数据库读取表
-    // users->ini
+    users->initmysql_result(m_connPool);
 }
 
 // 日志初始化

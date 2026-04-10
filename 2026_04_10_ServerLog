@@ -1,0 +1,63 @@
+2026-04-10 02:50:48.491291 [info]:timer tick
+2026-04-10 02:50:53.492244 [info]:timer tick
+2026-04-10 02:50:58.492554 [info]:timer tick
+2026-04-10 02:51:03.493368 [info]:timer tick
+2026-04-10 02:51:08.494362 [info]:timer tick
+2026-04-10 02:51:48.038465 [info]:timer tick
+2026-04-10 02:51:53.038803 [info]:timer tick
+2026-04-10 02:51:58.039062 [info]:timer tick
+2026-04-10 02:52:03.039264 [info]:timer tick
+2026-04-10 02:52:08.039714 [info]:timer tick
+2026-04-10 02:52:13.039930 [info]:timer tick
+2026-04-10 02:52:18.040451 [info]:timer tick
+2026-04-10 02:52:23.040715 [info]:timer tick
+2026-04-10 02:52:28.041150 [info]:timer tick
+2026-04-10 02:52:33.041572 [info]:timer tick
+2026-04-10 02:52:38.041856 [info]:timer tick
+2026-04-10 02:52:43.042080 [info]:timer tick
+2026-04-10 02:52:48.042738 [info]:timer tick
+2026-04-10 02:52:53.042804 [info]:timer tick
+2026-04-10 02:52:58.042975 [info]:timer tick
+2026-04-10 02:52:58.111027 [error]:accept error:errno is:11
+2026-04-10 02:52:58.115073 [info]:deal with the client(127.0.0.1)
+2026-04-10 02:52:58.115137 [info]:adjust timer once
+2026-04-10 02:52:58.115171 [info]:GET / HTTP/1.1
+2026-04-10 02:52:58.115205 [info]:send data to the client(127.0.0.1)
+2026-04-10 02:52:58.115215 [info]:adjust timer once
+2026-04-10 02:53:03.043435 [info]:timer tick
+2026-04-10 02:53:05.051734 [info]:close fd 16
+2026-04-10 02:53:05.051804 [info]:close fd 16
+2026-04-10 02:53:08.043751 [info]:timer tick
+2026-04-10 02:53:13.044064 [info]:timer tick
+2026-04-10 02:53:18.044361 [info]:timer tick
+2026-04-10 02:53:23.044545 [info]:timer tick
+2026-04-10 02:53:27.320569 [error]:accept error:errno is:11
+2026-04-10 02:53:27.324542 [info]:deal with the client(127.0.0.1)
+2026-04-10 02:53:27.324620 [info]:adjust timer once
+2026-04-10 02:53:27.324649 [info]:GET / HTTP/1.1
+2026-04-10 02:53:27.324766 [info]:send data to the client(127.0.0.1)
+2026-04-10 02:53:27.324779 [info]:adjust timer once
+2026-04-10 02:53:28.045014 [info]:timer tick
+2026-04-10 02:53:33.045306 [info]:timer tick
+2026-04-10 02:53:34.015217 [error]:accept error:errno is:11
+2026-04-10 02:53:34.018168 [info]:close fd 16
+2026-04-10 02:53:34.018280 [info]:close fd 16
+2026-04-10 02:53:34.021256 [info]:deal with the client(127.0.0.1)
+2026-04-10 02:53:34.021316 [info]:adjust timer once
+2026-04-10 02:53:34.021351 [info]:GET / HTTP/1.1
+2026-04-10 02:53:34.021486 [info]:send data to the client(127.0.0.1)
+2026-04-10 02:53:34.021529 [info]:adjust timer once
+2026-04-10 02:53:38.045459 [info]:timer tick
+2026-04-10 02:53:43.046109 [info]:timer tick
+2026-04-10 02:53:48.046178 [info]:timer tick
+2026-04-10 02:53:53.046693 [info]:close fd 17
+2026-04-10 02:53:53.046753 [info]:timer tick
+2026-04-10 02:53:53.046949 [error]:accept error:errno is:11
+2026-04-10 02:53:53.047036 [info]:deal with the client(127.0.0.1)
+2026-04-10 02:53:53.047082 [info]:adjust timer once
+2026-04-10 02:53:53.047115 [info]:GET / HTTP/1.1
+2026-04-10 02:53:53.047224 [info]:send data to the client(127.0.0.1)
+2026-04-10 02:53:53.047245 [info]:adjust timer once
+2026-04-10 02:53:57.550062 [info]:close fd 16
+2026-04-10 02:53:57.550124 [info]:close fd 16
+2026-04-10 02:53:58.047376 [info]:timer tick
