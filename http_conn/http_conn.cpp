@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/uio.h>
 
 // ========== 静态成员变量初始化 ==========
 int http_conn::m_epollfd = -1;
@@ -86,7 +87,7 @@ void http_conn::init(int sockfd, const sockaddr_in &addr, char* root, int TRIGMo
 
 // 关闭http连接
 // 关闭连接，关闭一个连接，客户总量减一
-void http_conn::clost_conn(bool real_close){
+void http_conn::close_conn(bool real_close){
     if(real_close && (m_sockfd != -1)){
         // 从epoll移除
         removefd(m_epollfd, m_sockfd);
@@ -96,8 +97,24 @@ void http_conn::clost_conn(bool real_close){
 }
 
 // 处理客户请求
+// 各子线程通过process函数对任务进行处理，调用 process_read 函数和 process_write 函数分别完成*报文解析*与*报文响应*两个任务。
 void http_conn::process(){
-    
+    //调用process_read完成报文解析
+    HTTP_CODE read_ret = process_read();
+
+    if(read_ret == HTTP_CODE::NO_REQUEST){
+        //注册并监听读事件
+        modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+        return;
+    }
+    //调用process_write完成报文响应
+    bool write_ret = process_write(read_ret);
+
+    if(!write_ret){
+        close_conn();
+    }
+    //注册并监听写事件
+    modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
 }
 
 // 非阻塞读操作,读取浏览器端发来的全部数据
@@ -136,10 +153,60 @@ bool http_conn::read_once(){
 
 // 非阻塞写操作,响应报文写入函数
 bool http_conn::write(){
+    int temp = 0;
 
+    //若要发送的数据长度为0
+    //表示响应报文为空，一般不会出现这种情况
+    if(bytes_to_send == 0){
+        modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);
+        init();
+        return true;
+    }
+
+    while(1){
+        //将响应报文的状态行、消息头、空行和响应正文发送给浏览器端
+        temp = writev(m_sockfd, m_iv, m_iv_count);
+
+        //正常发送，temp为发送的字节数
+        if(temp < 0){
+            if(errno == EAGAIN){        //判断缓冲区是否满了
+                modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);   //重新注册写事件
+                return true;
+            }
+            unmap();        //如果发送失败，但不是缓冲区问题，取消映射
+            return false;
+        }
+        bytes_have_send += temp;            //更新已发送字节
+        bytes_to_send -= temp;
+
+        if(bytes_have_send >= m_iv[0].iov_len){     //第一个iovec头部信息的数据已发送完，发送第二个iovec数据
+            m_iv[0].iov_len = 0;        //不再继续发送头部信息
+            m_iv[1].iov_base = m_file_address + (bytes_have_send - m_write_idx);
+            m_iv[1].iov_len = bytes_to_send;            
+        }
+        else{       //继续发送第一个iovec头部信息的数据
+            m_iv[0].iov_base = m_write_buf + bytes_have_send;
+            m_iv[0].iov_len = m_iv[0].iov_len - bytes_have_send;
+        }
+
+        //判断条件，数据已全部发送完
+        if (bytes_to_send <= 0)
+        {
+            unmap();
+            modfd(m_epollfd, m_sockfd, EPOLLIN, m_TRIGMode);    //在epoll树上重置EPOLLONESHOT事件
+
+            if (m_linger)   //浏览器的请求为长连接
+            {
+                init();     //重新初始化HTTP对象
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 }
-
-
 
 // 初始化数据库,同步线程初始化数据库读取表 （从连接池获取连接）
 void http_conn::initmysql_result(connection_pool* connPool){
@@ -254,10 +321,78 @@ HTTP_CODE http_conn::process_read(){
     return HTTP_CODE::NO_REQUEST;
 }      
 
+//定义http响应的一些状态信息
+const char* ok_200_title = "OK";
+const char* error_400_title = "Bad Request";
+const char* error_400_form = "Your request has bad syntax or is inherently impossible to staisfy.\n";
+const char* error_403_title = "Forbidden";
+const char* error_403_form = "You do not have permission to get file form this server.\n";
+const char* error_404_title = "Not Found";
+const char* error_404_form = "The requested file was not found on this server.\n";
+const char* error_500_title = "Internal Error";
+const char* error_500_form = "There was an unusual problem serving the request file.\n";
+
 // 填充http响应,向m_write_buf写入响应报文数据
 // 根据do_request的返回状态，服务器子线程调用process_write向m_write_buf中写入响应报文。
 bool http_conn::process_write(HTTP_CODE ret){
-    
+    switch(ret){
+        //内部错误，500
+        case HTTP_CODE::INTERNAL_ERROR:
+        {
+            add_status_line(500, error_500_title);          //状态行
+            add_headers(strlen(error_500_form));            //消息报头
+            if(!add_content(error_500_form)) return false;
+            break;
+        }
+        //报文语法有误，404
+        case HTTP_CODE::BAD_REQUEST:
+        {
+            add_status_line(404,error_404_title);
+            add_headers(strlen(error_404_form));
+            if(!add_content(error_404_form))  return false;
+            break;
+        }
+        //资源没有访问权限，403
+        case HTTP_CODE::FORBIDDEN_RESOURCE:
+        {
+            add_status_line(403,error_403_title);
+            add_headers(strlen(error_403_form));
+            if(!add_content(error_403_form))  return false;
+            break;
+        }
+        //文件存在，200
+        case HTTP_CODE::FILE_REQUEST:
+        {
+            add_status_line(200, ok_200_title);
+            
+            if(m_file_stat.st_size != 0){       //如果请求的资源存在
+                add_headers(m_file_stat.st_size);
+                //第一个iovec指针指向响应报文缓冲区，长度指向m_write_idx
+                m_iv[0].iov_base = m_write_buf;
+                m_iv[0].iov_len = m_write_idx;
+
+                //第二个iovec指针指向mmap返回的文件指针，长度指向文件大小
+                m_iv[1].iov_base=m_file_address;
+                m_iv[1].iov_len=m_file_stat.st_size;
+                m_iv_count = 2;
+
+                //发送的全部数据为响应报文头部信息和文件大小
+                bytes_to_send = m_write_idx + m_file_stat.st_size;
+                return true;
+            }
+            else{                               //如果请求的资源大小为0，则返回空白html文件
+                const char* ok_string = "<html><body></body></html>";
+                add_headers(strlen(ok_string));
+                if(!add_content(ok_string)) return false;
+            }
+        }
+        default: return false;
+    }
+    //除FILE_REQUEST状态外，其余状态只申请一个iovec，指向响应报文缓冲区
+    m_iv[0].iov_base = m_write_buf;
+    m_iv[1].iov_len = m_write_idx;
+    m_iv_count = 1;
+    return true;
 }     
 
 //---------------------------------------------------

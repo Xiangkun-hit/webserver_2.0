@@ -79,7 +79,7 @@ public:
     void init(int sockfd, const sockaddr_in &addr, char*, int, int, std::string user, std::string passwd, std::string sqlname);
 
     // 关闭http连接
-    void clost_conn(bool real_close = true);
+    void close_conn(bool real_close = true);
 
     // 处理客户请求
     void process();
