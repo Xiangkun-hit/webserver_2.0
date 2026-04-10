@@ -6,6 +6,8 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/uio.h>
+#include <stdarg.h>
+#include <errno.h>
 
 // ========== 静态成员变量初始化 ==========
 int http_conn::m_epollfd = -1;
@@ -372,8 +374,8 @@ bool http_conn::process_write(HTTP_CODE ret){
                 m_iv[0].iov_len = m_write_idx;
 
                 //第二个iovec指针指向mmap返回的文件指针，长度指向文件大小
-                m_iv[1].iov_base=m_file_address;
-                m_iv[1].iov_len=m_file_stat.st_size;
+                m_iv[1].iov_base = m_file_address;
+                m_iv[1].iov_len = m_file_stat.st_size;
                 m_iv_count = 2;
 
                 //发送的全部数据为响应报文头部信息和文件大小
@@ -390,7 +392,7 @@ bool http_conn::process_write(HTTP_CODE ret){
     }
     //除FILE_REQUEST状态外，其余状态只申请一个iovec，指向响应报文缓冲区
     m_iv[0].iov_base = m_write_buf;
-    m_iv[1].iov_len = m_write_idx;
+    m_iv[0].iov_len = m_write_idx;
     m_iv_count = 1;
     return true;
 }     
@@ -433,12 +435,12 @@ HTTP_CODE http_conn::parse_request_line(char* text){               //主状态�
 
     //对请求资源前7个字符进行判断
     //这里主要是有些报文的请求资源中会带有http://，这里需要对这种情况进行单独处理
-    if(strncasecmp(m_url, "http://", 7)){
+    if(strncasecmp(m_url, "http://", 7) == 0){
         m_url += 7;
         m_url = strchr(m_url, '/');
     }
     //同样增加https情况
-    if(strncasecmp(m_url, "https://", 8)==0)
+    if(strncasecmp(m_url, "https://", 8) == 0)
     {
         m_url+=8;
         m_url=strchr(m_url, '/');
@@ -752,7 +754,7 @@ bool http_conn::add_content_type(){
 }
 
 bool http_conn::add_content_length(int content_length){
-    return add_response("Content-Type:%s\r\n", content_length);
+    return add_response("Content-Type:%d\r\n", content_length);
 }
 
 //添加连接状态，通知浏览器端是保持连接还是关闭
