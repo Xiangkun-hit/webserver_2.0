@@ -58,7 +58,7 @@ enum class HTTP_CODE{
 };
 
 // 报文读取状态
-enum LINE_STATUS {
+enum class LINE_STATUS {
     LINE_OK = 0,  // 读取到完整行
     LINE_BAD,     // 行出错
     LINE_OPEN     // 行数据不完整
@@ -127,7 +127,7 @@ private:
 
     //m_start_line是已经解析的字符
     //get_line用于将指针向后偏移，指向未处理的字符
-    char* get_line(){return m_read_buf + m_start_line; }      
+    char* get_line(){return m_read_buf + m_start_line;}      
     
     //从状态机读取一行，分析是请求报文的哪一部分
     LINE_STATUS parse_line();
