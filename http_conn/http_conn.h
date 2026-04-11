@@ -176,7 +176,7 @@ private:
     struct iovec m_iv[2];               // io向量机制iovec;采用writev执行写操作，iovec结构体指针
     int m_iv_count;                     // 被写的内存块数量
 
-    int cgi;            // 是否启用的cgi
+    // int cgi;            // 是否启用的cgi
     char* m_string;                     // 存储请求头数据
     int bytes_to_send;                  // 剩余发送字节数
     int bytes_have_send;                // 已发送字节数
