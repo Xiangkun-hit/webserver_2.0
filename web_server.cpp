@@ -305,7 +305,7 @@ bool WebServer::dealclientdata(){
 // 处理信号
 bool WebServer::dealwithsignal(bool& timeout, bool& stop_server){
     int ret = 0;
-    int sig;
+    // int sig;
     char signals[1024];
     ret = recv(m_pipefd[0], signals, sizeof(signals), 0);
     if (ret == -1)

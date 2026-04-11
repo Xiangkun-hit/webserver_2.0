@@ -45,14 +45,15 @@ private:
     void run();
 
 private:
+    int m_actor_model;      // 事件处理模式（Reactor/Proactor）
     int m_thread_number;       //线程池中的线程数
-    pthread_t* m_threads;   //描述线程池的数组，其大小为m_thread_number
     int m_max_requests;     // 任务队列最大允许任务数
+    pthread_t* m_threads;   //描述线程池的数组，其大小为m_thread_number
+    connection_pool* m_connPool;        // 数据库连接池
     std::list<T*> m_workqueue;      // 请求队列
     locker m_queuelocker;    //保护请求队列的互斥锁
     sem m_queuestat;         // 信号量：判断是否有任务待处理
-    int m_actor_model;      // 事件处理模式（Reactor/Proactor）
-    connection_pool* m_connPool;        // 数据库连接池
+    
     bool m_stop;            // 是否结束线程
 };
 
@@ -103,7 +104,7 @@ bool threadpool<T>::append(T* request, int state){
     m_queuelocker.lock();
 
     // 任务队列已满
-    if(m_workqueue.size() > m_max_requests){
+    if(m_workqueue.size() > (size_t)m_max_requests){
         m_queuelocker.unlock();
         return false;
     }
@@ -125,7 +126,7 @@ bool threadpool<T>::append(T* request)
 
     // 根据硬件，预先设置请求队列的最大值
     // 任务队列已满
-    if(m_workqueue.size() > m_max_requests){
+    if(m_workqueue.size() > (size_t)m_max_requests){
         m_queuelocker.unlock();
         return false;
     }

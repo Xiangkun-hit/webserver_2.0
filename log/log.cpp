@@ -31,7 +31,7 @@ bool Log::init(const char* file_name, int close_log, int log_buf_size, int split
     //输出内容的长度
     m_log_buf_size = log_buf_size;
     m_buf = new char[m_log_buf_size];
-    memset(m_buf, '\0', sizeof(m_buf));
+    memset(m_buf, '\0', sizeof(m_log_buf_size));
 
     //日志的最大行数
     m_split_lines = split_lines;
