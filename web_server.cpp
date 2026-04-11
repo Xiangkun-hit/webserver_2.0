@@ -5,12 +5,15 @@ WebServer::WebServer(){
     users = new http_conn[MAX_FD];
 
     //root文件夹路径
+    // 如果你在 build 文件夹下运行 server
     char server_path[200];
     getcwd(server_path, 200);
-    char root[6] = "/root";
+    char root[9] = "/../root";
     m_root = (char *)malloc(strlen(server_path) + strlen(root) + 1);
     strcpy(m_root, server_path);
     strcat(m_root, root);
+
+    printf("===== 网站根目录路径: %s =====\n", m_root); //调试目录
 
     //定时器
     users_timer = new client_data[MAX_FD];

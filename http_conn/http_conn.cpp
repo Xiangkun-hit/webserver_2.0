@@ -279,11 +279,12 @@ HTTP_CODE http_conn::process_read(){
     while((m_check_state == CHECK_STATE::CHECK_STATE_CONTENT && line_status == LINE_STATUS::LINE_OK)
           || (line_status = parse_line()) == LINE_STATUS::LINE_OK){
         text = get_line();
+        std::cout << "text:" << text << std::endl;
 
         //m_start_line是每一个数据行在m_read_buf中的起始位置
         //m_checked_idx表示从状态机在m_read_buf中读取的位置
         m_start_line = m_checked_idx;
-        LOG_INFO("%s", text);
+        LOG_INFO("text:%s", text);
 
         //主状态机的三种状态转移逻辑
         switch(m_check_state)
@@ -292,14 +293,20 @@ HTTP_CODE http_conn::process_read(){
             {
                 //解析请求行
                 ret = parse_request_line(text);
-                if(ret == HTTP_CODE::BAD_REQUEST) return HTTP_CODE::BAD_REQUEST;
+                if(ret == HTTP_CODE::BAD_REQUEST){
+                    LOG_ERROR("请求行错误");
+                    return HTTP_CODE::BAD_REQUEST;
+                } 
                 break;
             }
             case CHECK_STATE::CHECK_STATE_HEADER:
             {
                 //解析请求头
                 ret = parse_headers(text);
-                if(ret == HTTP_CODE::BAD_REQUEST) return HTTP_CODE::BAD_REQUEST;
+                if(ret == HTTP_CODE::BAD_REQUEST){
+                    LOG_ERROR("请求头错误");
+                    return HTTP_CODE::BAD_REQUEST;
+                } 
                 //完整解析GET请求后，跳转到报文响应函数
                 else if(ret == HTTP_CODE::GET_REQUEST) return do_request();
                 break;
@@ -403,13 +410,16 @@ bool http_conn::process_write(HTTP_CODE ret){
 
 // 解析http请求行，获得请求方法，目标url及http版本号
 HTTP_CODE http_conn::parse_request_line(char* text){               //主状态机解析报文中的 请求行 数据
+    std::cout << "start parse_request_line" << std::endl;
     //在HTTP报文中，请求行用来说明请求类型,要访问的资源以及所使用的HTTP版本，其中各个部分之间通过\t或空格分隔。
     //请求行中最先含有空格和\t任一字符的位置并返回
-    m_url = strpbrk(text, "\t");
+    m_url = strpbrk(text, " \t");
 
     //如果没有空格或\t，则报文格式有误
-    if(!m_url) return HTTP_CODE::BAD_REQUEST;
-
+    if(!m_url){
+        std::cout << "报文格式有误" << std::endl;
+        return HTTP_CODE::BAD_REQUEST;
+    }
     //将该位置改为\0，用于将前面数据取出
     *m_url++ = '\0';
     
@@ -418,21 +428,29 @@ HTTP_CODE http_conn::parse_request_line(char* text){               //主状态�
     char* method = text;
     if(strcasecmp(method, "GET") == 0) m_method = METHOD::GET;
     else if(strcasecmp(method, "POST") == 0) {m_method = METHOD::POST; cgi = 1;}
-    else return HTTP_CODE::BAD_REQUEST;
-
+    else {
+        LOG_ERROR("请求方式错误!非GET,非POST")
+        return HTTP_CODE::BAD_REQUEST;
+    }
     //m_url此时跳过了第一个空格或\t字符，但不知道之后是否还有
     //将m_url向后偏移，通过查找，继续跳过空格和\t字符，指向请求资源的第一个字符
     m_url += strspn(m_url, "\t");
 
     //使用与判断请求方式的相同逻辑，判断HTTP版本号
-    m_version = strpbrk(m_url, "\t");
-    if(!m_version) return HTTP_CODE::BAD_REQUEST;
+    m_version = strpbrk(m_url, " \t");
+    if(!m_version){
+        LOG_ERROR("找不到HTTP版本号");
+        return HTTP_CODE::BAD_REQUEST;
+    } 
 
     *m_version++ = '\0';
     m_version += strspn(m_version, "\t");
 
     //仅支持HTTP/1.1
-    if(strcasecmp(m_version, "HTTP/1.1") != 0) return HTTP_CODE::BAD_REQUEST;
+    if(strcasecmp(m_version, "HTTP/1.1") != 0){
+        LOG_ERROR("HTTP非1.1");
+        return HTTP_CODE::BAD_REQUEST;
+    } 
 
     //对请求资源前7个字符进行判断
     //这里主要是有些报文的请求资源中会带有http://，这里需要对这种情况进行单独处理
@@ -457,6 +475,9 @@ HTTP_CODE http_conn::parse_request_line(char* text){               //主状态�
 
     //请求行处理完毕，将主状态机转移处理请求头
     m_check_state = CHECK_STATE::CHECK_STATE_HEADER;
+
+    LOG_INFO("✅ 解析到的请求URL: %s", m_url);    //for test
+
     return HTTP_CODE::NO_REQUEST;
 }
 
@@ -511,15 +532,39 @@ HTTP_CODE http_conn::parse_content(char* text){                    //主状态�
 }
 
 // test-----do_request()
-// HTTP_CODE http_conn::do_request() {
-//     // 临时测试：直接返回固定Hello World，不管请求是什么
-//     const char* test_content = "<h1>Hello World! Server is working!</h1>";
-//     m_file_stat.st_size = strlen(test_content);
-//     m_file_address = (char*)test_content;
-//     return HTTP_CODE::FILE_REQUEST;
-// }
+HTTP_CODE http_conn::do_request() {
+    // 临时测试：所有请求都强制返回 log.html（登录页）
+    strcpy(m_real_file, doc_root);
+    strcat(m_real_file, "/log.html");  // 强制拼接登录页路径
+    std::cout << "真实文件路径：" << m_real_file << std::endl;
 
+    // 加日志，方便排查
+    if (stat(m_real_file, &m_file_stat) < 0) {
+        LOG_ERROR("❌ stat文件失败: %s | errno=%d", m_real_file, errno);
+        return HTTP_CODE::NO_RESOURCE;
+    }
+    if (!S_ISREG(m_file_stat.st_mode)) {
+        LOG_ERROR("❌ 不是普通文件: %s", m_real_file);
+        return HTTP_CODE::FORBIDDEN_RESOURCE;
+    }
 
+    int fd = open(m_real_file, O_RDONLY);
+    if (fd < 0) {
+        LOG_ERROR("❌ 打开文件失败: %s", m_real_file);
+        return HTTP_CODE::NO_RESOURCE;
+    }
+    m_file_address = (char*)mmap(0, m_file_stat.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+    close(fd);
+    if (m_file_address == MAP_FAILED) {
+        LOG_ERROR("❌ mmap失败: %s", m_real_file);
+        return HTTP_CODE::INTERNAL_ERROR;
+    }
+
+    LOG_INFO("✅ 成功匹配文件: %s", m_real_file);
+    return HTTP_CODE::FILE_REQUEST;
+}
+
+/*
 
 // 处理HTTP请求（核心：登录/注册/访问网页）
 HTTP_CODE http_conn::do_request(){                                 //生成响应报文
@@ -664,6 +709,7 @@ HTTP_CODE http_conn::do_request(){                                 //生成响�
     return HTTP_CODE::FILE_REQUEST;
 } 
     
+*/
 
 //----------------------------------------------------------
 

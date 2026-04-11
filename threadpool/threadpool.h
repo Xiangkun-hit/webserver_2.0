@@ -82,7 +82,7 @@ threadpool<T>::threadpool(int actor_model, connection_pool* connPool, int thread
             delete[] m_threads;
             throw std::exception();
         }
-        if(pthread_detach(m_threads[i])){
+        if(pthread_detach(m_threads[i]) != 0){
             delete[] m_threads;
             throw std::exception();
         }
