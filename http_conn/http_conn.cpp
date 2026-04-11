@@ -394,6 +394,7 @@ bool http_conn::process_write(HTTP_CODE ret){
     m_iv[0].iov_base = m_write_buf;
     m_iv[0].iov_len = m_write_idx;
     m_iv_count = 1;
+    bytes_to_send = m_write_idx;
     return true;
 }     
 
@@ -510,15 +511,15 @@ HTTP_CODE http_conn::parse_content(char* text){                    //主状态�
 }
 
 // test-----do_request()
-HTTP_CODE http_conn::do_request() {
-    // 临时测试：直接返回固定Hello World，不管请求是什么
-    const char* test_content = "<h1>Hello World! Server is working!</h1>";
-    m_file_stat.st_size = strlen(test_content);
-    m_file_address = (char*)test_content;
-    return HTTP_CODE::FILE_REQUEST;
-}
+// HTTP_CODE http_conn::do_request() {
+//     // 临时测试：直接返回固定Hello World，不管请求是什么
+//     const char* test_content = "<h1>Hello World! Server is working!</h1>";
+//     m_file_stat.st_size = strlen(test_content);
+//     m_file_address = (char*)test_content;
+//     return HTTP_CODE::FILE_REQUEST;
+// }
 
-/*
+
 
 // 处理HTTP请求（核心：登录/注册/访问网页）
 HTTP_CODE http_conn::do_request(){                                 //生成响应报文
@@ -663,7 +664,7 @@ HTTP_CODE http_conn::do_request(){                                 //生成响�
     return HTTP_CODE::FILE_REQUEST;
 } 
     
-*/
+
 //----------------------------------------------------------
 
 
